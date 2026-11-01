@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>DEMON OPS</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { width:100%; height:100%; overflow:hidden; background:#000; touch-action:none;
+    font-family:"Vazirmatn","Segoe UI",Roboto,Tahoma,sans-serif; }
+  #c { position:fixed; inset:0; width:100%; height:100%; display:block; }
+  .hud { position:fixed; pointer-events:none; user-select:none; -webkit-user-select:none; z-index:5; color:#fff; }
+  .tappable { pointer-events:auto; }
+  .fa { direction:rtl; }
+
+  /* ---------- top ---------- */
+  #topCenter { top:6px; left:50%; transform:translateX(-50%); text-align:center; }
+  #timer { font-size:26px; font-weight:800; letter-spacing:1px; text-shadow:0 1px 6px #000c;
+    background:#00000088; border:1px solid #ffffff22; border-radius:10px; padding:1px 18px; display:inline-block; }
+  #score { margin-top:3px; font-size:13px; font-weight:700; text-shadow:0 1px 4px #000;
+    background:#00000077; border-radius:8px; padding:2px 12px; display:inline-block; }
+  #score .me { color:#7dd3fc; } #score .en { color:#f87171; }
+
+  #badge { top:8px; right:10px; text-align:right; }
+  #badge .logo { display:inline-flex; align-items:center; gap:6px; background:#00000088;
+    border:1px solid #ef444455; border-radius:9px; padding:4px 10px; font-weight:900; letter-spacing:2px;
+    font-size:13px; color:#fecaca; }
+  #badge .logo .dot { width:9px; height:9px; border-radius:50%; background:#ef4444; box-shadow:0 0 8px #ef4444; }
+  #ping { margin-top:3px; font-size:11px; font-weight:700; color:#a7f3d0; text-shadow:0 1px 3px #000; display:inline-block;
+    background:#00000077; border-radius:7px; padding:1px 8px; }
+
+  #minimapWrap { top:8px; left:8px; }
+  #minimap { width:112px; height:112px; border-radius:10px; border:1px solid #ffffff2e; background:#0b0e12cc; }
+
+  /* ---------- kill feed ---------- */
+  #killfeed { top:44px; right:10px; text-align:right; font-size:12px; }
+  #killfeed .kf { background:#000000a8; border-radius:7px; padding:3px 9px; margin-top:4px; display:inline-block;
+    border:1px solid #ffffff1a; transition:opacity .5s; }
+  #killfeed .kf b { color:#fca5a5; } #killfeed .kf .w { color:#fde68a; font-size:10px; margin:0 5px; }
+
+  /* ---------- banner ---------- */
+  #banner { top:16%; left:50%; transform:translateX(-50%); font-size:19px; font-weight:900; color:#fff;
+    text-shadow:0 2px 10px #000; opacity:0; transition:opacity .25s; text-align:center; white-space:nowrap; }
+  #banner.show { opacity:1; }
+  #banner .sub { font-size:13px; font-weight:700; color:#fca5a5; }
+
+  /* ---------- crosshair / hitmarker ---------- */
+  #crosshair { top:50%; left:50%; width:0; height:0; }
+  #crosshair i { position:absolute; background:#ffffffd9; box-shadow:0 0 3px #0008; }
+  #crosshair .u { width:2px; height:9px; left:-1px; top:-16px; } #crosshair .d { width:2px; height:9px; left:-1px; top:7px; }
+  #crosshair .l { width:9px; height:2px; left:-16px; top:-1px; } #crosshair .r { width:9px; height:2px; left:7px; top:-1px; }
+  #crosshair .c { width:3px; height:3px; left:-1.5px; top:-1.5px; border-radius:50%; background:#ffffff; }
+  #hitmarker { top:50%; left:50%; width:0; height:0; opacity:0; }
+  #hitmarker i { position:absolute; width:11px; height:2.5px; background:#fff; border-radius:2px; box-shadow:0 0 4px #0009; }
+  #hitmarker.kill i { background:#ff5252; }
+  #hitmarker i:nth-child(1){ transform:translate(-13px,-9px) rotate(45deg); }
+  #hitmarker i:nth-child(2){ transform:translate(2px,-9px) rotate(-45deg); }
+  #hitmarker i:nth-child(3){ transform:translate(-13px,7px) rotate(-45deg); }
+  #hitmarker i:nth-child(4){ transform:translate(2px,7px) rotate(45deg); }
+
+  #vignette { inset:0; opacity:0; background:radial-gradient(ellipse at center, transparent 42%, #b91c1c99 100%);
+    transition:opacity .35s; z-index:6; }
+  #lowhp { inset:0; opacity:0; background:radial-gradient(ellipse at center, transparent 55%, #7f1d1db0 100%); z-index:4; }
+
+  /* ---------- scope ---------- */
+  #scope { inset:0; display:none; z-index:7; }
+  #scope .circle { position:absolute; top:50%; left:50%; width:76vmin; height:76vmin; transform:translate(-50%,-50%);
+    border-radius:50%; box-shadow:0 0 0 200vmax #000; border:2px solid #000; }
+  #scope .h { position:absolute; top:50%; left:0; width:100%; height:1.5px; background:#000000c9; }
+  #scope .v { position:absolute; left:50%; top:0; height:100%; width:1.5px; background:#000000c9; }
+  #scope .tick { position:absolute; left:50%; top:50%; width:8px; height:2px; background:#000; transform:translate(-50%,-50%); }
+
+  /* ---------- bottom left: hp + joystick ---------- */
+  #hpwrap { bottom:14px; left:14px; width:200px; }
+  .bar { height:11px; border-radius:7px; background:#000000a1; border:1px solid #ffffff26; overflow:hidden; margin-top:4px; position:relative; }
+  .bar .f { height:100%; width:100%; transition:width .15s; }
+  #hpfill .f { background:linear-gradient(90deg,#22c55e,#4ade80); }
+  #armfill .f { background:linear-gradient(90deg,#38bdf8,#7dd3fc); }
+  .barlbl { display:flex; justify-content:space-between; font-size:10.5px; font-weight:800; text-shadow:0 1px 3px #000; margin-top:2px; }
+  #joy { bottom:88px; left:20px; width:118px; height:118px; border-radius:50%; border:2px solid #ffffff30;
+    background:#ffffff0d; display:none; }
+  #joyNub { position:absolute; width:52px; height:52px; left:33px; top:33px; border-radius:50%;
+    background:#ffffff42; border:2px solid #ffffff66; }
+
+  /* ---------- bottom right: ammo + buttons ---------- */
+  #ammo { bottom:14px; right:14px; text-align:right; }
+  #wname { font-size:11px; font-weight:800; color:#fde68a; text-shadow:0 1px 3px #000; }
+  #ammoNums { font-weight:900; text-shadow:0 2px 6px #000; }
+  #ammoMag { font-size:30px; } #ammoRes { font-size:15px; color:#cbd5e1; }
+  #btns { bottom:66px; right:14px; }
+  .gbtn { position:absolute; border-radius:50%; background:#0f1115b8; border:2px solid #ffffff38; color:#fff;
+    display:flex; align-items:center; justify-content:center; font-weight:900; text-shadow:0 1px 3px #000; }
+  .gbtn:active { background:#1f2937d8; }
+  #btnFire { width:88px; height:88px; right:2px; bottom:0; border-width:3px; border-color:#ef444466; background:#180c0cb0; }
+  #btnFire .in { width:56px; height:56px; border-radius:50%; border:3px solid #fca5a5; position:relative; }
+  #btnFire .in::after { content:""; position:absolute; inset:20px; border-radius:50%; background:#fca5a5; }
+  #btnAds { width:56px; height:56px; right:104px; bottom:8px; font-size:11px; }
+  #btnAds.on { border-color:#f59e0b; color:#fbbf24; background:#3b2b0ab0; }
+  #btnReload { width:50px; height:50px; right:112px; bottom:74px; font-size:17px; }
+  #btnSwap { width:50px; height:50px; right:26px; bottom:96px; font-size:13px; flex-direction:column; line-height:1.05; }
+  #btnSwap small { font-size:8.5px; font-weight:700; color:#94a3b8; }
+
+  /* ---------- overlays ---------- */
+  .full { inset:0; background:#05060ad9; display:flex; align-items:center; justify-content:center; flex-direction:column; z-index:20; }
+  #menu { background:
+    radial-gradient(1200px 500px at 50% -10%, #1b0d0d 0%, transparent 60%),
+    linear-gradient(180deg,#05060af2 0%,#0a0c14f5 60%,#05060af7 100%); }
+  #menu .logo { font-size:44px; font-weight:900; letter-spacing:6px; color:#fecaca;
+    text-shadow:0 0 26px #ef444488, 0 2px 0 #450a0a; }
+  #menu .logo b { color:#ef4444; }
+  #menu .tag { margin-top:4px; font-size:13px; color:#94a3b8; font-weight:700; }
+  #menu .card { margin-top:26px; background:#0d1017cc; border:1px solid #ffffff1c; border-radius:16px;
+    padding:18px 22px; width:min(420px, 86vw); }
+  .bigbtn { display:block; width:100%; border:none; border-radius:12px; padding:13px; font-size:16px; font-weight:900;
+    color:#fff; background:linear-gradient(90deg,#b91c1c,#ef4444); box-shadow:0 6px 18px #dc262655; margin-top:12px; }
+  .bigbtn.ghost { background:#1e293b; box-shadow:none; }
+  .row { display:flex; align-items:center; justify-content:space-between; margin-top:12px; font-size:12.5px; color:#cbd5e1; font-weight:700; }
+  input[type=range] { width:150px; accent-color:#ef4444; }
+  select { background:#1e293b; color:#fff; border:1px solid #ffffff22; border-radius:8px; padding:4px 8px; font-weight:700; }
+  #deathOverlay { display:none; background:#05060ac9; }
+  #deathOverlay .t { font-size:26px; font-weight:900; color:#fca5a5; }
+  #deathOverlay .c { margin-top:8px; font-size:14px; color:#e2e8f0; font-weight:700; }
+  #endOverlay { display:none; }
+  #endOverlay .t { font-size:34px; font-weight:900; }
+  #endOverlay .win { color:#fbbf24; text-shadow:0 0 24px #f59e0b66; } #endOverlay .lose { color:#f87171; }
+  #endStats { margin-top:14px; background:#0d1017cc; border:1px solid #ffffff1c; border-radius:14px; padding:14px 20px;
+    font-size:14px; font-weight:700; color:#e2e8f0; line-height:2; text-align:center; }
+
+  #rotate { inset:0; z-index:50; background:#05060a; display:none; align-items:center; justify-content:center;
+    flex-direction:column; color:#fff; font-weight:900; font-size:18px; text-align:center; }
+  #rotate .ph { font-size:44px; margin-bottom:10px; }
+  @media (orientation: portrait) { #rotate { display:flex; } }
+
+  #err { position:fixed; bottom:0; left:0; right:0; z-index:99; background:#450a0ae8; color:#fecaca;
+    font-size:11px; padding:6px 10px; display:none; white-space:pre-wrap; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<!-- HUD -->
+<div class="hud" id="topCenter"><div id="timer">5:00</div><br><span id="score"><span class="me">تو 0</span> — <span class="en">0 بات</span></span></div>
+<div class="hud" id="badge"><span class="logo"><span class="dot"></span>DEMON</span><br><span id="ping">58ms</span></div>
+<div class="hud" id="minimapWrap"><canvas id="minimap" width="112" height="112"></canvas></div>
+<div class="hud" id="killfeed"></div>
+<div class="hud" id="banner"></div>
+<div class="hud" id="crosshair"><i class="u"></i><i class="d"></i><i class="l"></i><i class="r"></i><i class="c"></i></div>
+<div class="hud" id="hitmarker"><i></i><i></i><i></i><i></i></div>
+<div class="hud" id="vignette"></div><div class="hud" id="lowhp"></div>
+<div class="hud" id="scope"><div class="circle"></div><div class="h"></div><div class="v"></div></div>
+
+<div class="hud" id="hpwrap">
+  <div class="barlbl"><span>سپر</span><span id="armTxt">50</span></div>
+  <div class="bar" id="armfill"><div class="f"></div></div>
+  <div class="barlbl" style="margin-top:7px"><span>سلامتی</span><span id="hpTxt">100</span></div>
+  <div class="bar" id="hpfill"><div class="f"></div></div>
+</div>
+<div class="hud" id="joy"><div id="joyNub"></div></div>
+
+<div class="hud" id="ammo"><div id="wname">AR-9 DEMON</div><div id="ammoNums"><span id="ammoMag">30</span><span id="ammoRes"> / 90</span></div></div>
+<div class="hud" id="btns">
+  <div class="gbtn tappable" id="btnFire"><div class="in"></div></div>
+  <div class="gbtn tappable" id="btnAds">ADS</div>
+  <div class="gbtn tappable" id="btnReload">⟳</div>
+  <div class="gbtn tappable" id="btnSwap">SR<small>تعویض</small></div>
+</div>
+
+<!-- منوی اصلی -->
+<div class="hud full tappable" id="menu">
+  <div class="logo">DEMON<b>OPS</b></div>
+  <div class="tag fa">نبرد تیم‌ددچت — تو در برابر بات‌ها</div>
+  <div class="card fa">
+    <button class="bigbtn" id="btnStart">شروع بازی</button>
+    <div class="row"><span>حساسیت نگاه</span><input type="range" id="sens" min="30" max="200" value="100"></div>
+    <div class="row"><span>کیفیت گرافیک</span><select id="quality"><option value="mid">عادی</option><option value="low">کم (گوشی ضعیف)</option></select></div>
+    <div class="row"><span>صدا</span><select id="soundSel"><option value="1">روشن</option><option value="0">خاموش</option></select></div>
+  </div>
+</div>
+
+<div class="hud full" id="deathOverlay"><div class="t">کشته شدی! ☠</div><div class="c" id="respawnTxt">بازگشت تا ۳ ثانیه...</div></div>
+
+<div class="hud full fa" id="endOverlay">
+  <div class="t" id="endTitle">پیروزی!</div>
+  <div id="endStats"></div>
+  <div style="width:min(300px,80vw); margin-top:16px">
+    <button class="bigbtn" id="btnAgain">بازی مجدد</button>
+    <button class="bigbtn ghost" id="btnToMenu">منوی اصلی</button>
+  </div>
+</div>
+
+<div id="rotate" class="fa"><div class="ph">📱↻</div>گوشی را افقی بگیر</div>
+<div id="err"></div>
+
+<script src="three.min.js"></script>
+<script src="sounds.js"></script>
+<script>
+window.onerror = function(m, s, l) { var e = document.getElementById('err'); e.style.display='block';
+  e.textContent = 'خطا: ' + m + ' @' + (s||'').split('/').pop() + ':' + l; };
+
+(function(){
+"use strict";
+// ============================================================ ابزار
+var $ = function(id){ return document.getElementById(id); };
+var clamp = function(v,a,b){ return v<a?a:(v>b?b:v); };
+var rand = function(a,b){ return a + Math.random()*(b-a); };
+var lerp = function(a,b,t){ return a+(b-a)*t; };
+
+// ============================================================ صدا
+var AC = null, SFX = {};
+var soundOn = localStorage.getItem("dg_sound") !== "0";
+function initAudio(){
+  if (AC) return;
+  try {
+    AC = new (window.AudioContext || window.webkitAudioContext)();
+    var names = ["shot","sniper","hit","kill","reload","empty","hurt","ui"];
+    names.forEach(function(n){
+      if (!DG_SOUNDS[n]) return;
+      var b = DG_SOUNDS[n].split(",")[1], bin = atob(b), buf = new Uint8Array(bin.length);
+      for (var i=0;i<bin.length;i++) buf[i] = bin.charCodeAt(i);
+      AC.decodeAudioData(buf.buffer, function(d){ SFX[n] = d; }, function(){});
+    });
+  } catch(e){}
+}
+function play(n, vol, rate){
+  if (!AC || !soundOn || !SFX[n]) return;
+  try {
+    var s = AC.createBufferSource(); s.buffer = SFX[n];
+    s.playbackRate.value = rate || 1;
+    var g = AC.createGain(); g.gain.value = vol == null ? 1 : vol;
+    g.connect(AC.destination); s.connect(g); s.start();
+  } catch(e){}
+}
+
+// ============================================================ صحنه
+var canvas = $("c");
+var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, powerPreference: "high-performance" });
+var camera = new THREE.PerspectiveCamera(70, innerWidth/innerHeight, 0.05, 220);
+var scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0xd8cbaa, 40, 110);
+
+function applyQuality(){
+  var q = localStorage.getItem("dg_quality") || "mid";
+  renderer.setPixelRatio(q === "low" ? 0.8 : Math.min(devicePixelRatio || 1, 1.3));
+  renderer.setSize(innerWidth, innerHeight, true);
+}
+applyQuality();
+addEventListener("resize", function(){ camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight, true); });
+
+// نور + آسمان
+var hemi = new THREE.HemisphereLight(0xa8c8e8, 0x8a7a58, 0.95); scene.add(hemi);
+var sun = new THREE.DirectionalLight(0xfff1d6, 0.9); sun.position.set(24, 36, 12); scene.add(sun);
+(function sky(){
+  var cv = document.createElement("canvas"); cv.width = 8; cv.height = 256;
+  var g = cv.getContext("2d"), gr = g.createLinearGradient(0,0,0,256);
+  gr.addColorStop(0, "#5f97d0"); gr.addColorStop(0.55, "#a9c4de"); gr.addColorStop(0.78, "#ddd2b4"); gr.addColorStop(1, "#d8cbaa");
+  g.fillStyle = gr; g.fillRect(0,0,8,256);
+  scene.background = new THREE.CanvasTexture(cv);
+})();
+
+// بافت‌های پروسیجرال
+function makeTex(size, base, painter, rep){
+  var cv = document.createElement("canvas"); cv.width = cv.height = size;
+  var g = cv.getContext("2d");
+  g.fillStyle = base; g.fillRect(0,0,size,size);
+  painter(g, size);
+  var t = new THREE.CanvasTexture(cv);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  if (rep) t.repeat.set(rep, rep);
+  return t;
+}
+function noise(g, s, n, alpha, dark){
+  for (var i=0;i<n;i++){
+    var v = Math.floor(rand(0,60));
+    g.fillStyle = "rgba(" + (dark?v:255-v) + "," + (dark?v:255-v) + "," + (dark?v:255-v) + "," + alpha + ")";
+    g.fillRect(rand(0,s), rand(0,s), rand(1,4), rand(1,4));
+  }
+}
+var sandTex = makeTex(256, "#b39a6d", function(g,s){
+  noise(g, s, 2600, 0.10, false); noise(g, s, 1600, 0.10, true);
+  g.strokeStyle = "rgba(90,75,50,0.14)"; g.lineWidth = 1;
+  for (var i=0;i<26;i++){ g.beginPath(); var x=rand(0,s), y=rand(0,s);
+    g.moveTo(x,y); g.lineTo(x+rand(-30,30), y+rand(-12,12)); g.stroke(); }
+}, 14);
+var metalTex = makeTex(256, "#9aa1a6", function(g,s){
+  for (var i=0;i<6;i++){ g.fillStyle = "rgba(120,30,25,0.10)"; g.fillRect(0, i*42+14, s, 22); }
+  noise(g, s, 1400, 0.12, true);
+  g.fillStyle = "rgba(180,90,40,0.16)";
+  for (var j=0;j<40;j++) g.fillRect(rand(0,s), rand(0,s), rand(3,14), rand(2,7));
+});
+var concTex = makeTex(256, "#8f8a80", function(g,s){ noise(g, s, 2200, 0.13, true); noise(g, s, 900, 0.07, false); }, 2);
+
+// ============================================================ نقشه
+var HALF = 32;
+var solids = [];   // AABB {x1,z1,x2,z2} برای برخورد + مینی‌مپ
+var solidMeshes = []; // برای ریکست گلوله
+var matContainer = new THREE.MeshLambertMaterial({ map: metalTex, color: 0xd8c9a0 });
+var matContainerB = new THREE.MeshLambertMaterial({ map: metalTex, color: 0xa8b8a0 });
+var matWall = new THREE.MeshLambertMaterial({ map: concTex, color: 0xcfc9bd });
+var matCrate = new THREE.MeshLambertMaterial({ map: concTex, color: 0xbfa06a });
+
+function addBox(x, z, w, d, h, mat, ry){
+  var geo = new THREE.BoxGeometry(w, h, d);
+  var m = new THREE.Mesh(geo, mat);
+  m.position.set(x, h/2, z);
+  if (ry) m.rotation.y = ry;
+  scene.add(m); solidMeshes.push(m);
+  // AABB بدون چرخش (چرخش فقط 0/90 با جابجایی w/d اعمال می‌شود)
+  solids.push({ x1: x-w/2, z1: z-d/2, x2: x+w/2, z2: z+d/2 });
+}
+function container(x, z, rotated, alt){
+  var w = rotated ? 2.4 : 4.6, d = rotated ? 4.6 : 2.4;
+  addBox(x, z, w, d, 2.6, alt ? matContainerB : matContainer, 0);
+}
+container(-14,-10,false,false); container(10,-16,true,true); container(18,8,true,false);
+container(-18,14,true,true); container(0,-24,false,true); container(-24,2,true,false);
+container(24,-6,false,true); container(6,20,true,false); container(14,-22,true,true);
+addBox(-8,4,7,0.5,1.35,matWall,0); addBox(8,-4,7,0.5,1.35,matWall,0);
+addBox(0,10,0.5,7,1.35,matWall,0); addBox(-12,-14,0.5,7,1.35,matWall,0);
+addBox(14,14,0.5,7,1.35,matWall,0); addBox(-6,22,6,0.5,1.35,matWall,0);
+[[-4,-6],[3,7],[-10,9],[11,2],[-20,-8],[20,20],[-6,24],[16,-14],[26,10],[-26,22]].forEach(function(p){
+  addBox(p[0], p[1], 1.6, 1.6, 1.6, matCrate, 0);
+});
+// دیوارهای دور
+addBox(0,-HALF,64,1,3.4,matWall,0); addBox(0,HALF,64,1,3.4,matWall,0);
+addBox(-HALF,0,1,64,3.4,matWall,0); addBox(HALF,0,1,64,3.4,matWall,0);
+
+// زمین
+var ground = new THREE.Mesh(new THREE.PlaneGeometry(64,64), new THREE.MeshLambertMaterial({ map: sandTex }));
+ground.rotation.x = -Math.PI/2; scene.add(ground); solidMeshes.push(ground);
+
+// ============================================================ اسلحه‌ها
+var WEAPONS = {
+  AR: { name:"AR-9 DEMON", mag:30, reserve:90, dmg:24, headMul:2, interval:0.1, auto:true,
+        spreadHip:0.022, spreadAds:0.007, adsFov:55, reload:1.6, recoil:0.011, sound:"shot" },
+  SR: { name:"SR-50 DEMON", mag:5, reserve:25, dmg:95, headMul:2.2, interval:1.15, auto:false,
+        spreadHip:0.06, spreadAds:0.002, adsFov:26, reload:2.2, recoil:0.034, sound:"sniper", scoped:true }
+};
+function gunMat(c){ return new THREE.MeshLambertMaterial({ color: c }); }
+function buildAR(){
+  var g = new THREE.Group();
+  function box(w,h,d,x,y,z,c,rx){
+    var m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), gunMat(c));
+    m.position.set(x,y,z); if (rx) m.rotation.x = rx; g.add(m); return m;
+  }
+  box(0.055,0.09,0.42, 0,0,-0.10, 0x23262b);        // بدنه
+  box(0.028,0.028,0.30, 0,0.012,-0.42, 0x17191d);   // لوله
+  box(0.05,0.06,0.22, 0,-0.005,-0.30, 0x2e3238);    // گارد
+  box(0.04,0.14,0.07, 0,-0.11,-0.05, 0x24301f, 0.14); // خشاب
+  box(0.05,0.08,0.16, 0,-0.005,0.16, 0x23262b);     // قنداق
+  box(0.03,0.035,0.10, 0,0.062,-0.05, 0x14161a);    // سایت
+  box(0.035,0.10,0.05, 0,-0.10,0.05, 0x1c1e22, -0.3); // دسته
+  box(0.03,0.03,0.02, 0,0.012,-0.575, 0xff9800);    // نوک لوله
+  g.userData.flashZ = -0.60;
+  return g;
+}
+function buildSR(){
+  var g = new THREE.Group();
+  function box(w,h,d,x,y,z,c,rx){
+    var m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), gunMat(c));
+    m.position.set(x,y,z); if (rx) m.rotation.x = rx; g.add(m); return m;
+  }
+  box(0.05,0.085,0.52, 0,0,-0.12, 0x2b3a2f);        // بدنه سبز
+  box(0.026,0.026,0.40, 0,0.012,-0.55, 0x17191d);   // لوله بلند
+  box(0.045,0.10,0.09, 0,-0.105,0.0, 0x1e2a20, 0.1); // خشاب
+  box(0.05,0.09,0.18, 0,-0.01,0.20, 0x2b3a2f);      // قنداق
+  var scope = new THREE.Mesh(new THREE.CylinderGeometry(0.028,0.028,0.16,10), gunMat(0x14161a));
+  scope.rotation.x = Math.PI/2; scope.position.set(0,0.075,-0.08); g.add(scope);
+  box(0.035,0.09,0.05, 0,-0.095,0.09, 0x1c1e22, -0.3);
+  box(0.028,0.028,0.02, 0,0.012,-0.755, 0xff9800);
+  g.userData.flashZ = -0.78;
+  return g;
+}
+var gunAR = buildAR(), gunSR = buildSR();
+camera.add(gunAR); camera.add(gunSR); scene.add(camera);
+var flashTex = makeTex(64, "#000", function(g,s){
+  var gr = g.createRadialGradient(s/2,s/2,2,s/2,s/2,s/2);
+  gr.addColorStop(0,"rgba(255,240,180,1)"); gr.addColorStop(0.4,"rgba(255,170,60,0.85)"); gr.addColorStop(1,"rgba(255,120,0,0)");
+  g.fillStyle = gr; g.fillRect(0,0,s,s);
+});
+function makeFlash(){
+  var m = new THREE.Mesh(new THREE.PlaneGeometry(0.16,0.16),
+    new THREE.MeshBasicMaterial({ map: flashTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+  m.visible = false; return m;
+}
+var flashAR = makeFlash(), flashSR = makeFlash();
+gunAR.add(flashAR); gunSR.add(flashSR);
+var flashLight = new THREE.PointLight(0xffa726, 0, 7); scene.add(flashLight);
+
+var HIP_AR = { x: 0.24, y: -0.22, z: -0.45 }, ADS_AR = { x: 0, y: -0.155, z: -0.32 };
+var HIP_SR = { x: 0.26, y: -0.24, z: -0.50 };
+
+// ============================================================ بازیکن
+var P = {
+  pos: new THREE.Vector3(0, 1.6, -28),
+  yaw: 0, pitch: 0, hp: 100, armor: 50, alive: true,
+  kills: 0, deaths: 0, shots: 0, hits: 0,
+  weapon: "AR", mag: 30, reserve: 90,
+  lastDamage: -99, lastFire: -9, reloadT: 0, ads: false, sprint: false,
+  respawnT: 0, protect: 0
+};
+var moveVec = { x: 0, y: 0 };
+var recoil = 0, bobT = 0;
+
+function weapon(){ return WEAPONS[P.weapon]; }
+function setWeapon(w){
+  P.weapon = w;
+  P.mag = WEAPONS[w].mag; P.reserve = WEAPONS[w].reserve;
+  gunAR.visible = w === "AR"; gunSR.visible = w === "SR";
+  $("btnSwap").innerHTML = (w === "AR" ? "SR" : "AR") + "<small>تعویض</small>";
+  $("wname").textContent = WEAPONS[w].name;
+  updateAmmo();
+}
+setWeapon("AR");
+
+function updateAmmo(){
+  $("ammoMag").textContent = P.mag;
+  $("ammoRes").textContent = " / " + P.reserve;
+}
+
+// اسپاون‌ها
+var SPAWNS = [ new THREE.Vector3(0,1.6,-28), new THREE.Vector3(0,1.6,28),
+               new THREE.Vector3(-28,1.6,0), new THREE.Vector3(28,1.6,0) ];
+function farSpawn(fromList){
+  var best = SPAWNS[0], bd = -1;
+  for (var i=0;i<SPAWNS.length;i++){
+    var d = 1e9;
+    for (var j=0;j<fromList.length;j++){
+      var dx = SPAWNS[i].x - fromList[j].pos.x, dz = SPAWNS[i].z - fromList[j].pos.z;
+      d = Math.min(d, dx*dx + dz*dz);
+    }
+    if (d > bd){ bd = d; best = SPAWNS[i]; }
+  }
+  return best;
+}
+
+// ============================================================ برخورد
+function collide(pos, r){
+  for (var i=0;i<solids.length;i++){
+    var s = solids[i];
+    var nx = clamp(pos.x, s.x1, s.x2), nz = clamp(pos.z, s.z1, s.z2);
+    var dx = pos.x - nx, dz = pos.z - nz;
+    var d2 = dx*dx + dz*dz;
+    if (d2 < r*r){
+      if (d2 > 1e-9){
+        var d = Math.sqrt(d2), push = (r - d) / d;
+        pos.x += dx * push; pos.z += dz * push;
+      } else {
+        // داخل باکس: کمترین محور خروجی
+        var l = pos.x - s.x1, rr = s.x2 - pos.x, t = pos.z - s.z1, b = s.z2 - pos.z;
+        var m = Math.min(l, rr, t, b);
+        if (m === l) pos.x = s.x1 - r; else if (m === rr) pos.x = s.x2 + r;
+        else if (m === t) pos.z = s.z1 - r; else pos.z = s.z2 + r;
+      }
+    }
+  }
+  pos.x = clamp(pos.x, -HALF + 1, HALF - 1);
+  pos.z = clamp(pos.z, -HALF + 1, HALF - 1);
+}
+
+// ============================================================ بات‌ها
+var BOT_NAMES = ["BOT-1","BOT-2","BOT-3","BOT-4"];
+var botMatBody = new THREE.MeshLambertMaterial({ color: 0x3a4048 });
+var botMatDark = new THREE.MeshLambertMaterial({ color: 0x2b2f35 });
+var botMatHead = new THREE.MeshLambertMaterial({ color: 0xc9a07a });
+var botMatRed  = new THREE.MeshLambertMaterial({ color: 0xd32f2f });
+var ringGeo = new THREE.RingGeometry(0.5, 0.72, 26);
+var shadowGeo = new THREE.CircleGeometry(0.55, 18);
+var botMatRing = new THREE.MeshBasicMaterial({ color: 0xff2e2e, transparent: true, opacity: 0.55, side: THREE.DoubleSide });
+var botMatShadow = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35 });
+
+function buildBot(){
+  var g = new THREE.Group();
+  function part(geo, mat, x, y, z, tag){
+    var m = new THREE.Mesh(geo, mat); m.position.set(x,y,z);
+    if (tag) m.userData.part = tag;
+    g.add(m); return m;
+  }
+  part(new THREE.BoxGeometry(0.16,0.62,0.16), botMatDark, -0.13,0.31,0, "leg");
+  part(new THREE.BoxGeometry(0.16,0.62,0.16), botMatDark, 0.13,0.31,0, "leg");
+  part(new THREE.BoxGeometry(0.46,0.62,0.26), botMatBody, 0,0.93,0, "body");
+  part(new THREE.BoxGeometry(0.13,0.44,0.13), botMatBody, -0.30,0.98,0, "arm");
+  part(new THREE.BoxGeometry(0.13,0.44,0.13), botMatBody, 0.30,0.98,0, "arm");
+  part(new THREE.BoxGeometry(0.26,0.26,0.26), botMatHead, 0,1.42,0, "head");
+  part(new THREE.BoxGeometry(0.30,0.09,0.30), botMatRed, 0,1.55,0, "head"); // کلاه قرمز
+  part(new THREE.BoxGeometry(0.07,0.09,0.62), botMatDark, 0.14,1.02,-0.30, "gun");
+  var ring = new THREE.Mesh(ringGeo, botMatRing); ring.rotation.x = -Math.PI/2; ring.position.y = 0.03; g.add(ring);
+  var sh = new THREE.Mesh(shadowGeo, botMatShadow); sh.rotation.x = -Math.PI/2; sh.position.y = 0.02; g.add(sh);
+  var fl = makeFlash(); fl.scale.set(3,3,1); fl.position.set(0.14,1.02,-0.65); g.add(fl);
+  g.userData.flash = fl; // برای روشن/خاموشی در حلقه‌ی بات
+  g.traverse(function(o){ if (o.isMesh) o.userData.isBot = true; });
+  return g;
+}
+var ray = new THREE.Raycaster();
+function Bot(name){
+  this.name = name;
+  this.mesh = buildBot(); scene.add(this.mesh);
+  this.flash = this.mesh.userData.flash;
+  this.pos = new THREE.Vector3(); this.hp = 100; this.dead = false;
+  this.respawnT = 0; this.target = new THREE.Vector3(); this.retargetT = 0;
+  this.fireT = rand(1,2); this.burst = 0; this.flashT = 0; this.hurtT = 0;
+  this.fallT = -1; this.spawn();
+}
+Bot.prototype.spawn = function(){
+  var cands = [ new THREE.Vector3(rand(-24,24),0,rand(-24,24)) ];
+  // دور از بازیکن
+  var p;
+  for (var tries=0; tries<12; tries++){
+    p = new THREE.Vector3(rand(-25,25), 0, rand(-25,25));
+    var dx = p.x - P.pos.x, dz = p.z - P.pos.z;
+    if (dx*dx + dz*dz > 500) { cands[0] = p; break; }
+    cands[0] = p;
+  }
+  this.pos.copy(cands[0]); collide(this.pos, 0.6);
+  this.pos.y = 0;
+  this.hp = 100; this.dead = false; this.fallT = -1;
+  this.mesh.visible = true; this.mesh.rotation.x = 0; this.mesh.rotation.z = 0;
+  this.mesh.scale.set(1,1,1);
+  this.pickTarget();
+  this.updateMesh();
+};
+Bot.prototype.pickTarget = function(){
+  var a = rand(0, Math.PI*2), r = rand(7, 17);
+  this.target.set(P.pos.x + Math.cos(a)*r, 0, P.pos.z + Math.sin(a)*r);
+  this.target.x = clamp(this.target.x, -29, 29);
+  this.target.z = clamp(this.target.z, -29, 29);
+  this.retargetT = rand(1.6, 3.4);
+};
+Bot.prototype.updateMesh = function(){
+  this.mesh.position.set(this.pos.x, 0, this.pos.z);
+  var dx = P.pos.x - this.pos.x, dz = P.pos.z - this.pos.z;
+  this.mesh.rotation.y = Math.atan2(dx, dz);
+};
+Bot.prototype.damage = function(d, isHead){
+  if (this.dead) return;
+  this.hp -= d; this.hurtT = 0.09;
+  if (this.hp <= 0){ this.die(); }
+};
+Bot.prototype.die = function(){
+  this.dead = true; this.respawnT = 3.0; this.fallT = 0;
+  P.kills++;
+  play("kill", 0.8);
+  hitmark(true);
+  addKill("تو", weapon().name, this.name);
+  banner("☠ کشتی: " + this.name, "امتیاز " + P.kills);
+  vibrate(60);
+  checkEnd();
+};
+Bot.prototype.shoot = function(dt){
+  this.fireT -= dt;
+  if (this.fireT > 0) return;
+  // دید به بازیکن؟
+  var eye = new THREE.Vector3(this.pos.x, 1.42, this.pos.z);
+  var pe = new THREE.Vector3(P.pos.x, P.alive ? 1.55 : 0.6, P.pos.z);
+  var dir = pe.clone().sub(eye); var dist = dir.length();
+  ray.near = 0; ray.far = dist;
+  ray.set(eye, dir.clone().normalize());
+  var hits = ray.intersectObjects(solidMeshes, false);
+  var blocked = hits.length > 0 && hits[0].distance < dist - 0.4;
+  this.fireT = rand(0.7, 1.4);
+  if (blocked || dist > 42) return;
+  // رگبار ۳ تایی
+  var self = this;
+  var shots = 0;
+  function one(){
+    if (self.dead || !P.alive || state !== "play") return;
+    shots++;
+    self.flashT = 0.05;
+    var vol = clamp(1 - dist/48, 0.06, 0.5);
+    play("shot", vol * 0.7, rand(0.9, 1.1));
+    var chance = clamp(0.40 - dist * 0.011 - (Math.abs(moveVec.x)+Math.abs(moveVec.y) > 1.2 ? 0.10 : 0) - (P.protect > 0 ? 0.5 : 0), 0.05, 0.42);
+    var hitP = Math.random() < chance;
+    var aim = pe.clone();
+    if (!hitP) aim.add(new THREE.Vector3(rand(-1.6,1.6), rand(-0.8,1.4), rand(-1.6,1.6)));
+    tracer(eye.clone().add(new THREE.Vector3(0,-0.25,0)), aim, 0xffb74d);
+    if (hitP) playerDamage(rand(8, 13), self);
+    if (shots < 3) setTimeout(one, 130);
+  }
+  one();
+};
+var bots = BOT_NAMES.map(function(n){ return new Bot(n); });
+
+// ============================================================ تریسر
+var tracers = [];
+function tracer(a, b, color){
+  var g = new THREE.BufferGeometry().setFromPoints([a.clone(), b.clone()]);
+  var m = new THREE.Line(g, new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: 0.85 }));
+  scene.add(m); tracers.push({ m: m, t: 0.06 });
+}
+
+// ============================================================ شلیک بازیکن
+var spreadDot = { x: 0, y: 0 };
+function tryFire(){
+  var w = weapon();
+  if (!P.alive || state !== "play" || P.reloadT > 0) return;
+  var now = perfNow();
+  if (now - P.lastFire < w.interval * 1000) return;
+  if (P.mag <= 0){ play("empty", 0.5); startReload(); P.lastFire = now; return; }
+  P.lastFire = now;
+  P.mag--; updateAmmo();
+  P.shots++;
+  play(w.sound, 0.9, rand(0.94, 1.06));
+  // فلش
+  var gun = P.weapon === "AR" ? gunAR : gunSR;
+  var fl = P.weapon === "AR" ? flashAR : flashSR;
+  fl.visible = true; fl.rotation.z = rand(0, 6.28);
+  fl.position.set(0, 0.012, gun.userData.flashZ);
+  flashLight.intensity = 2.2;
+  flashLight.position.copy(camera.position).add(camDir().multiplyScalar(1.1));
+  // پراکندگی — اول دوربین را کاملاً با وضعیت فعلی سینک کن تا ریکِست دقیق باشد
+  camera.position.set(P.pos.x, P.pos.y, P.pos.z);
+  camera.rotation.order = "YXZ";
+  camera.rotation.y = P.yaw;
+  camera.rotation.x = P.pitch + recoil;
+  camera.updateMatrixWorld();
+  var sp = P.ads ? w.spreadAds : w.spreadHip;
+  spreadDot.x = (Math.random() * 2 - 1) * sp; spreadDot.y = (Math.random() * 2 - 1) * sp;
+  ray.near = 0; ray.far = Infinity; // نکته‌ی مهم: ray بین بات‌ها و بازیکن مشترک است — far را ریست کن
+  ray.setFromCamera(spreadDot, camera);
+  var targets = [];
+  bots.forEach(function(b){ if (!b.dead) targets.push(b.mesh); });
+  var hits = ray.intersectObjects(targets.concat(solidMeshes), true);
+  var end = camera.position.clone().add(camDir().multiplyScalar(80));
+  if (hits.length){
+    var h = hits[0]; end = h.point.clone();
+    if (h.object.userData.isBot){
+      var bot = null;
+      bots.forEach(function(b){ if (!b.dead && (h.object === b.mesh || h.object.parent === b.mesh)) bot = b; });
+      if (!bot){ for (var o = h.object; o && !bot; o = o.parent)
+          bots.forEach(function(b){ if (b.mesh === o) bot = b; }); }
+      if (bot){
+        P.hits++;
+        var isHead = h.object.userData.part === "head";
+        bot.damage(w.dmg * (isHead ? w.headMul : 1), isHead);
+        play("hit", 0.6);
+        hitmark(bot.dead);
+      }
+    }
+  }
+  // تریسر از سر لوله
+  var tip = camera.localToWorld(new THREE.Vector3(gun.position.x * 0.4, gun.position.y + 0.02, gun.userData.flashZ));
+  tracer(tip, end, 0xffe082);
+  // لگد
+  recoil += w.recoil; recoil += Math.abs(w.recoil) * 0.3 * (Math.random() - 0.5);
+  vibrate(12);
+  if (P.mag === 0) startReload();
+}
+function startReload(){
+  var w = weapon();
+  if (P.reloadT > 0 || P.mag >= w.mag || P.reserve <= 0) return;
+  P.reloadT = w.reload; play("reload", 0.7);
+}
+function finishReload(){
+  var w = weapon();
+  var need = w.mag - P.mag, take = Math.min(need, P.reserve);
+  P.mag += take; P.reserve -= take; updateAmmo();
+}
+function camDir(){
+  return new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
+}
+
+// ============================================================ آسیب بازیکن
+function playerDamage(d, by){
+  if (!P.alive || P.protect > 0) return;
+  var absorbed = Math.min(P.armor, d * 0.65);
+  P.armor -= absorbed; d -= absorbed;
+  P.hp -= d; P.lastDamage = perfNow() / 1000;
+  play("hurt", 0.6);
+  $("vignette").style.opacity = 0.85;
+  setTimeout(function(){ $("vignette").style.opacity = 0; }, 120);
+  vibrate(30);
+  updateHp();
+  if (P.hp <= 0) playerDie(by);
+}
+function playerDie(by){
+  P.alive = false; P.deaths++; P.hp = 0; updateHp();
+  if (by) addKill(by.name, "SR-50", "تو");
+  banner("کشته شدی!", "");
+  $("deathOverlay").style.display = "flex";
+  P.respawnT = 3.0;
+  checkEnd();
+}
+function respawnPlayer(){
+  var list = bots.filter(function(b){ return !b.dead; });
+  var s = farSpawn(list.length ? list : bots);
+  P.pos.copy(s); P.yaw = Math.atan2(s.x, s.z); // رو به مرکز نقشه
+  P.pitch = 0;
+  P.hp = 100; P.armor = 50; P.alive = true; P.protect = 1.0;
+  $("deathOverlay").style.display = "none";
+  updateHp();
+}
+
+// ============================================================ HUD
+function updateHp(){
+  $("hpfill").firstElementChild.style.width = clamp(P.hp,0,100) + "%";
+  $("armfill").firstElementChild.style.width = clamp(P.armor,0,50) * 2 + "%";
+  $("hpTxt").textContent = Math.max(0, Math.round(P.hp));
+  $("armTxt").textContent = Math.max(0, Math.round(P.armor));
+  $("lowhp").style.opacity = P.alive && P.hp < 35 ? (0.5 + 0.3 * Math.sin(perfNow()/220)) : 0;
+}
+var hmT = null;
+function hitmark(kill){
+  var h = $("hitmarker");
+  h.className = kill ? "kill" : ""; h.id = "hitmarker";
+  h.style.opacity = 1;
+  if (hmT) clearTimeout(hmT);
+  hmT = setTimeout(function(){ h.style.opacity = 0; }, kill ? 260 : 140);
+}
+function addKill(a, w, b){
+  var kf = $("killfeed");
+  var d = document.createElement("div");
+  d.className = "kf";
+  d.innerHTML = "<b>" + a + "</b><span class='w'>[" + w + "]</span>" + b;
+  kf.insertBefore(d, kf.firstChild);
+  while (kf.children.length > 4) kf.removeChild(kf.lastChild);
+  setTimeout(function(){ d.style.opacity = 0; }, 3600);
+  setTimeout(function(){ if (d.parentNode) d.parentNode.removeChild(d); }, 4200);
+}
+var bannerT = null;
+function banner(t, sub){
+  var b = $("banner");
+  b.innerHTML = t + (sub ? "<br><span class='sub'>" + sub + "</span>" : "");
+  b.className = "hud show";
+  if (bannerT) clearTimeout(bannerT);
+  bannerT = setTimeout(function(){ b.className = "hud"; }, 1600);
+}
+function updateScore(){
+  $("score").innerHTML = "<span class='me'>تو " + P.kills + "</span> — <span class='en'>" + P.deaths + " بات</span>";
+}
+
+// مینی‌مپ
+var mm = $("minimap").getContext("2d");
+function drawMinimap(){
+  var s = 112, sc = s / 68;
+  mm.clearRect(0,0,s,s);
+  mm.fillStyle = "#10151ccc"; mm.fillRect(0,0,s,s);
+  mm.fillStyle = "#4b5563";
+  for (var i=0;i<solids.length;i++){
+    var b = solids[i];
+    mm.fillRect((b.x1 + 34) * sc, (b.z1 + 34) * sc, (b.x2 - b.x1) * sc, (b.z2 - b.z1) * sc);
+  }
+  // دشمن‌ها: دایره قرمز (مثل هایلایت دشمن)
+  for (var j=0;j<bots.length;j++){
+    var bot = bots[j]; if (bot.dead) continue;
+    var x = (bot.pos.x + 34) * sc, y = (bot.pos.z + 34) * sc;
+    mm.beginPath(); mm.arc(x, y, 6.5, 0, 6.283);
+    mm.strokeStyle = "rgba(239,68,68,0.9)"; mm.lineWidth = 1.5; mm.stroke();
+    mm.fillStyle = "#ef4444"; mm.beginPath(); mm.arc(x, y, 2.6, 0, 6.283); mm.fill();
+  }
+  // بازیکن (فلش)
+  var px = (P.pos.x + 34) * sc, py = (P.pos.z + 34) * sc;
+  mm.save(); mm.translate(px, py); mm.rotate(-P.yaw);
+  mm.fillStyle = "#7dd3fc";
+  mm.beginPath(); mm.moveTo(0,-6); mm.lineTo(4.4,4.6); mm.lineTo(0,2.4); mm.lineTo(-4.4,4.6); mm.closePath(); mm.fill();
+  mm.restore();
+}
+
+// ============================================================ ورودی لمسی
+var sens = (parseFloat(localStorage.getItem("dg_sens")) || 100) / 100;
+$("sens").value = Math.round(sens * 100);
+var joyTouch = null, lookTouch = null, lookLast = null;
+var firing = false;
+var joyEl = $("joy"), nub = $("joyNub");
+
+function inLeft(x){ return x < innerWidth * 0.42; }
+document.addEventListener("touchstart", function(e){
+  if (state !== "play") return;
+  for (var i=0;i<e.changedTouches.length;i++){
+    var t = e.changedTouches[i];
+    if (inLeft(t.clientX) && t.clientY > innerHeight * 0.30 && joyTouch === null){
+      joyTouch = t.identifier;
+      joyEl.style.display = "block";
+      joyEl.style.left = (t.clientX - 59) + "px";
+      joyEl.style.top = (t.clientY - 59) + "px";
+      joyEl.style.bottom = "auto";
+      nub.style.left = "33px"; nub.style.top = "33px";
+      joyCenter = { x: t.clientX, y: t.clientY };
+    } else if (lookTouch === null){
+      lookTouch = t.identifier; lookLast = { x: t.clientX, y: t.clientY };
+    }
+  }
+}, { passive: false });
+var joyCenter = { x: 0, y: 0 };
+document.addEventListener("touchmove", function(e){
+  e.preventDefault();
+  for (var i=0;i<e.changedTouches.length;i++){
+    var t = e.changedTouches[i];
+    if (t.identifier === joyTouch){
+      var dx = t.clientX - joyCenter.x, dy = t.clientY - joyCenter.y;
+      var d = Math.hypot(dx, dy), max = 52;
+      if (d > max){ dx *= max/d; dy *= max/d; }
+      nub.style.left = (33 + dx) + "px"; nub.style.top = (33 + dy) + "px";
+      moveVec.x = dx / max; moveVec.y = dy / max;
+      P.sprint = Math.hypot(moveVec.x, moveVec.y) > 0.92 && !P.ads;
+    } else if (t.identifier === lookTouch && lookLast){
+      var k = 0.0035 * sens * (P.ads && !weapon().scoped ? 0.6 : 1);
+      P.yaw -= (t.clientX - lookLast.x) * k;
+      P.pitch -= (t.clientY - lookLast.y) * k;
+      P.pitch = clamp(P.pitch, -1.35, 1.35);
+      lookLast = { x: t.clientX, y: t.clientY };
+    }
+  }
+}, { passive: false });
+document.addEventListener("touchend", function(e){
+  for (var i=0;i<e.changedTouches.length;i++){
+    var t = e.changedTouches[i];
+    if (t.identifier === joyTouch){
+      joyTouch = null; moveVec.x = 0; moveVec.y = 0; P.sprint = false;
+      joyEl.style.display = "none";
+    }
+    if (t.identifier === lookTouch){ lookTouch = null; }
+  }
+});
+document.addEventListener("touchcancel", function(e){
+  joyTouch = null; lookTouch = null; moveVec.x = 0; moveVec.y = 0; joyEl.style.display = "none";
+});
+
+// دکمه‌ها
+function bindHold(el, on, off){
+  el.addEventListener("touchstart", function(e){ e.preventDefault(); e.stopPropagation(); on(); }, { passive: false });
+  el.addEventListener("touchend", function(e){ e.preventDefault(); e.stopPropagation(); if (off) off(); }, { passive: false });
+  el.addEventListener("touchcancel", function(){ if (off) off(); });
+}
+bindHold($("btnFire"), function(){ firing = true; }, function(){ firing = false; });
+bindHold($("btnReload"), function(){ startReload(); });
+bindHold($("btnAds"), function(){ toggleAds(); });
+bindHold($("btnSwap"), function(){ if (P.reloadT <= 0){ play("ui", 0.6); setWeapon(P.weapon === "AR" ? "SR" : "AR"); } });
+
+function toggleAds(){
+  P.ads = !P.ads;
+  $("btnAds").className = "gbtn tappable" + (P.ads ? " on" : "");
+  $("scope").style.display = (P.ads && weapon().scoped) ? "block" : "none";
+  $("crosshair").style.display = (P.ads && weapon().scoped) ? "none" : "block";
+  play("ui", 0.5);
+}
+
+// کیبورد (برای تست دسکتاپ؛ روی گوشی بی‌اثر)
+var keys = {};
+addEventListener("keydown", function(e){ keys[e.key.toLowerCase()] = true; if (e.key === " ") tryFire(); });
+addEventListener("keyup", function(e){ keys[e.key.toLowerCase()] = false; });
+addEventListener("mousedown", function(e){ if (state === "play" && e.target.tagName !== "BUTTON") firing = true; });
+addEventListener("mouseup", function(){ firing = false; });
+addEventListener("mousemove", function(e){
+  if (state === "play" && document.pointerLockElement){
+    var k = 0.0022 * sens;
+    P.yaw -= e.movementX * k; P.pitch = clamp(P.pitch - e.movementY * k, -1.35, 1.35);
+  }
+});
+canvas.addEventListener("click", function(){ if (state === "play") canvas.requestPointerLock && canvas.requestPointerLock(); });
+
+function vibrate(ms){
+  try { if (window.DEMON && DEMON.vibrate) DEMON.vibrate(ms);
+        else if (navigator.vibrate) navigator.vibrate(ms); } catch(e){}
+}
+
+// ============================================================ جریان بازی
+var state = "menu";  // menu | play | dead | end
+var matchTime = 300, perfNow = (function(){
+  var p = window.performance && performance.now ? function(){ return performance.now(); } : function(){ return Date.now(); };
+  return p;
+})();
+
+function resetMatch(){
+  P.kills = 0; P.deaths = 0; P.shots = 0; P.hits = 0;
+  matchTime = 300;
+  P.hp = 100; P.armor = 50; P.alive = true; P.protect = 1;
+  P.pos.set(0,1.6,-28); P.yaw = Math.PI; P.pitch = 0; // رو به مرکز
+  setWeapon("AR"); P.ads = false; $("btnAds").className = "gbtn tappable";
+  $("scope").style.display = "none"; $("crosshair").style.display = "block";
+  $("deathOverlay").style.display = "none";
+  $("killfeed").innerHTML = "";
+  updateHp(); updateAmmo(); updateScore();
+  bots.forEach(function(b){ b.spawn(); });
+}
+function startMatch(){
+  initAudio();
+  if (AC && AC.state === "suspended") AC.resume();
+  resetMatch();
+  state = "play";
+  $("menu").style.display = "none";
+  $("endOverlay").style.display = "none";
+  banner("شروع نبرد!", "اولین کسی باش که به ۲۰ می‌رسه");
+}
+function checkEnd(){
+  updateScore();
+  if (state !== "play") return;
+  if (P.kills >= 20) endMatch(true);
+  else if (P.deaths >= 20) endMatch(false);
+}
+function endMatch(win){
+  state = "end"; firing = false;
+  $("endOverlay").style.display = "flex";
+  var t = $("endTitle");
+  t.textContent = win ? "پیروزی! 🔥" : "باختی!";
+  t.className = win ? "t win" : "t lose";
+  var acc = P.shots ? Math.round(P.hits / P.shots * 100) : 0;
+  $("endStats").innerHTML =
+    "کشتار: <b>" + P.kills + "</b> — مرگ: <b>" + P.deaths + "</b><br>" +
+    "دقت شلیک: <b>" + acc + "%</b> — شلیک: <b>" + P.shots + "</b>";
+}
+$("btnStart").addEventListener("click", startMatch);
+$("btnAgain").addEventListener("click", startMatch);
+$("btnToMenu").addEventListener("click", function(){
+  state = "menu"; $("endOverlay").style.display = "none"; $("menu").style.display = "flex";
+});
+$("sens").addEventListener("change", function(){ sens = this.value / 100; localStorage.setItem("dg_sens", this.value); });
+$("quality").addEventListener("change", function(){ localStorage.setItem("dg_quality", this.value); applyQuality(); });
+$("quality").value = localStorage.getItem("dg_quality") || "mid";
+$("soundSel").addEventListener("change", function(){ soundOn = this.value === "1"; localStorage.setItem("dg_sound", this.value); });
+$("soundSel").value = soundOn ? "1" : "0";
+
+// پینگ فیک (حس زنده‌ی لابی)
+setInterval(function(){ $("ping").textContent = Math.round(clamp(58 + Math.sin(Date.now()/3000)*14 + rand(-6,6), 32, 99)) + "ms"; }, 2000);
+
+// ============================================================ حلقه‌ی بازی
+var lastT = perfNow(), mmT = 0, readySent = false;
+function tick(){
+  requestAnimationFrame(tick);
+  var now = perfNow();
+  var dt = Math.min((now - lastT) / 1000, 0.05);
+  lastT = now;
+
+  if (state === "play"){
+    matchTime -= dt;
+    if (matchTime <= 0){ matchTime = 0; endMatch(P.kills >= P.deaths); }
+    var m = Math.floor(matchTime / 60), s = Math.floor(matchTime % 60);
+    $("timer").textContent = m + ":" + (s < 10 ? "0" : "") + s;
+
+    // --- حرکت بازیکن
+    var kx = 0, ky = 0;
+    if (keys["w"]) ky -= 1; if (keys["s"]) ky += 1;
+    if (keys["a"]) kx -= 1; if (keys["d"]) kx += 1;
+    var mvx = moveVec.x + kx, mvy = moveVec.y + ky;
+    var mag = Math.hypot(mvx, mvy);
+    if (mag > 1){ mvx /= mag; mvy /= mag; }
+    var speed = P.ads ? 3.4 : (P.sprint || keys["shift"] ? 8.2 : 5.6);
+    if (!P.alive) speed = 0;
+    var sy = Math.sin(P.yaw), cy = Math.cos(P.yaw);
+    // جلو = -Z محلی
+    var vx = (mvx * cy - mvy * sy) * speed * dt;
+    var vz = (-mvx * sy - mvy * cy) * speed * dt;
+    P.pos.x += vx; P.pos.z += vz;
+    collide(P.pos, 0.5);
+    if (mag > 0.1 && P.alive){ bobT += dt * (P.sprint ? 11 : 8); }
+
+    // --- ریلود
+    if (P.reloadT > 0){ P.reloadT -= dt; if (P.reloadT <= 0){ P.reloadT = 0; finishReload(); } }
+
+    // --- شلیک خودکار
+    if (firing && weapon().auto) tryFire();
+
+    // --- رگن
+    if (P.alive && now/1000 - P.lastDamage > 4.5 && P.hp < 100){
+      P.hp = Math.min(100, P.hp + 22 * dt); updateHp();
+    }
+    if (P.protect > 0) P.protect -= dt;
+    if (!P.alive){
+      P.respawnT -= dt;
+      $("respawnTxt").textContent = "بازگشت تا " + Math.max(0, P.respawnT).toFixed(1) + " ثانیه...";
+      if (P.respawnT <= 0) respawnPlayer();
+    }
+
+    // --- بات‌ها
+    bots.forEach(function(b){
+      if (b.flashT > 0){ b.flashT -= dt; }
+      b.flash.visible = b.flashT > 0;
+      if (b.dead){
+        if (b.fallT >= 0 && b.fallT < 0.4){
+          b.fallT += dt;
+          b.mesh.rotation.x = -Math.min(1, b.fallT / 0.35) * Math.PI / 2;
+        }
+        b.respawnT -= dt;
+        if (b.respawnT <= 0) b.spawn();
+        return;
+      }
+      b.retargetT -= dt;
+      if (b.retargetT <= 0) b.pickTarget();
+      var dx = b.target.x - b.pos.x, dz = b.target.z - b.pos.z;
+      var d = Math.hypot(dx, dz);
+      if (d > 0.8){
+        var bs = 3.3;
+        b.pos.x += dx / d * bs * dt; b.pos.z += dz / d * bs * dt;
+        collide(b.pos, 0.55);
+      }
+      // جدا شدن از بازیکن
+      var pdx = b.pos.x - P.pos.x, pdz = b.pos.z - P.pos.z;
+      var pd = Math.hypot(pdx, pdz);
+      if (pd < 1.6 && pd > 0.01){ b.pos.x += pdx / pd * (1.6 - pd); b.pos.z += pdz / pd * (1.6 - pd); }
+      b.updateMesh();
+      b.shoot(dt);
+    });
+  }
+
+  // --- دوربین
+  recoil *= Math.exp(-9 * dt);
+  var bobY = Math.sin(bobT) * 0.02, bobX = Math.cos(bobT * 0.5) * 0.012;
+  camera.position.set(P.pos.x, P.pos.y + bobY, P.pos.z);
+  camera.rotation.order = "YXZ";
+  camera.rotation.y = P.yaw;
+  camera.rotation.x = P.pitch + recoil;
+
+  // --- اسلحه‌ی دست
+  var w = weapon();
+  var hip = P.weapon === "AR" ? HIP_AR : HIP_SR;
+  var tgt = P.ads ? (w.scoped ? HIP_SR : ADS_AR) : hip;
+  var gp = P.weapon === "AR" ? gunAR.position : gunSR.position;
+  var gp2 = P.weapon === "AR" ? gunSR.position : gunAR.position;
+  gp2.set(P.weapon === "AR" ? HIP_SR.x : HIP_AR.x, P.weapon === "AR" ? HIP_SR.y : HIP_AR.y, P.weapon === "AR" ? HIP_SR.z : HIP_AR.z);
+  var reloadDip = P.reloadT > 0 ? Math.sin(Math.min(1, (weapon().reload - P.reloadT) / weapon().reload) * Math.PI) * 0.10 : 0;
+  gp.x = lerp(gp.x, tgt.x, Math.min(1, dt * 12));
+  gp.y = lerp(gp.y, tgt.y - reloadDip, Math.min(1, dt * 12));
+  gp.z = lerp(gp.z, tgt.z, Math.min(1, dt * 12));
+  gunAR.position.y += bobY * 0.4; gunSR.position.y += bobY * 0.4;
+
+  // FOV
+  var targetFov = P.ads ? w.adsFov : 70;
+  if (Math.abs(camera.fov - targetFov) > 0.3){
+    camera.fov = lerp(camera.fov, targetFov, Math.min(1, dt * 10));
+    camera.updateProjectionMatrix();
+  }
+  // فلش و نور
+  if (flashLight.intensity > 0) flashLight.intensity = Math.max(0, flashLight.intensity - dt * 26);
+  if (flashAR.visible && flashLight.intensity < 0.6) flashAR.visible = false;
+  if (flashSR.visible && flashLight.intensity < 0.6) flashSR.visible = false;
+
+  // تریسرها
+  for (var i = tracers.length - 1; i >= 0; i--){
+    tracers[i].t -= dt;
+    if (tracers[i].t <= 0){ scene.remove(tracers[i].m); tracers.splice(i,1); }
+  }
+
+  // مینی‌مپ هر 100ms
+  mmT -= dt;
+  if (mmT <= 0){ mmT = 0.1; if (state === "play" || state === "dead") drawMinimap(); }
+
+  renderer.render(scene, camera);
+  if (!readySent){ readySent = true; try { if (window.DEMON && DEMON.ready) DEMON.ready(); } catch(e){} }
+}
+tick();
+
+// ============================================================ هوک تست
+window.DG = {
+  startMatch: startMatch,
+  fire: tryFire,
+  reload: startReload,
+  swap: function(){ setWeapon(P.weapon === "AR" ? "SR" : "AR"); },
+  ads: toggleAds,
+  state: function(){ return state; },
+  player: P,
+  bots: bots,
+  aimNearest: function(){
+    var best = null, bd = 1e9;
+    bots.forEach(function(b){
+      if (b.dead) return;
+      var d = (b.pos.x - P.pos.x) * (b.pos.x - P.pos.x) + (b.pos.z - P.pos.z) * (b.pos.z - P.pos.z);
+      if (d < bd){ bd = d; best = b; }
+    });
+    if (!best) return null;
+    var dx = best.pos.x - P.pos.x, dz = best.pos.z - P.pos.z;
+    P.yaw = Math.atan2(-dx, -dz);
+    P.pitch = -0.03;
+    return { yaw: P.yaw, dist: Math.sqrt(bd) };
+  },
+  rayDebug: function(){
+    camera.rotation.order = "YXZ";
+    camera.rotation.y = P.yaw; camera.rotation.x = P.pitch + recoil;
+    camera.updateMatrixWorld();
+    var r2 = new THREE.Raycaster(); r2.setFromCamera({ x: 0, y: 0 }, camera);
+    var ts = []; bots.forEach(function(b){ if (!b.dead) ts.push(b.mesh); });
+    var hs = r2.intersectObjects(ts.concat(solidMeshes), true);
+    return hs.slice(0, 6).map(function(h){
+      return (h.object.userData.part || (h.object === ground ? "ground" : "solid")) + "@" + (Math.round(h.distance * 10) / 10);
+    });
+  },
+  camInfo: function(){
+    return { camPos: [camera.position.x.toFixed(1), camera.position.z.toFixed(1)],
+             pPos: [P.pos.x.toFixed(1), P.pos.z.toFixed(1)], yaw: P.yaw.toFixed(2),
+             bots: bots.map(function(b){ return b.name + ":" + (b.dead ? "DEAD" : (b.pos.x.toFixed(0) + "," + b.pos.z.toFixed(0))); }) };
+  },
+  fireDebug: function(){
+    camera.position.set(P.pos.x, P.pos.y, P.pos.z);
+    camera.rotation.order = "YXZ";
+    camera.rotation.y = P.yaw; camera.rotation.x = P.pitch + recoil;
+    camera.updateMatrixWorld();
+    var ts = []; bots.forEach(function(b){ if (!b.dead) ts.push(b.mesh); });
+    function dump(hs){
+      return hs.slice(0, 6).map(function(h){
+        return (h.object.userData.part || (h.object === ground ? "ground" : "solid")) +
+               "/bot=" + !!h.object.userData.isBot + "@" + h.distance.toFixed(2) +
+               "@p(" + h.point.x.toFixed(1) + "," + h.point.y.toFixed(1) + "," + h.point.z.toFixed(1) + ")" +
+               (h.object.geometry && h.object.geometry.type ? "/" + h.object.geometry.type : "");
+      });
+    }
+    var fresh = new THREE.Raycaster(); fresh.near = 0; fresh.far = Infinity;
+    fresh.setFromCamera({ x: 0, y: 0 }, camera);
+    var a = fresh.intersectObjects(ts.concat(solidMeshes), true);
+    ray.near = 0; ray.far = Infinity;
+    ray.setFromCamera({ x: 0, y: 0 }, camera);
+    var b2 = ray.intersectObjects(ts.concat(solidMeshes), true);
+    return { fresh: dump(a), shared: dump(b2),
+             org: [fresh.ray.origin.x.toFixed(2), fresh.ray.origin.y.toFixed(2), fresh.ray.origin.z.toFixed(2)],
+             dir: [fresh.ray.direction.x.toFixed(3), fresh.ray.direction.y.toFixed(3), fresh.ray.direction.z.toFixed(3)] };
+  },
+  hurt: function(n){ playerDamage(n || 30, null); },
+  killMe: function(){ playerDamage(999, bots[0]); }
+};
+updateHp(); updateAmmo(); updateScore();
+})();
+</script>
+</body>
+</html>
